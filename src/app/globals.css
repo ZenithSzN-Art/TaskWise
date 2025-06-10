@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  /* Default body font set in layout.tsx via className, Tailwind config handles specific font families */
+}
+
+@layer base {
+  :root {
+    --background: 225 17% 94%; /* Light Gray #F0F0F5 */
+    --foreground: 225 10% 20%; /* Dark Gray for text on light gray */
+
+    --muted: 225 15% 88%;
+    --muted-foreground: 225 10% 35%;
+
+    --popover: 225 17% 94%;
+    --popover-foreground: 225 10% 20%;
+
+    --card: 225 17% 94%;
+    --card-foreground: 225 10% 20%;
+
+    --border: 225 10% 80%;
+    --input: 225 10% 80%;
+
+    --primary: 210 44% 60%; /* Muted Blue #6699CC */
+    --primary-foreground: 210 25% 95%; /* Light color for text on muted blue */
+
+    --secondary: 210 40% 85%;
+    --secondary-foreground: 210 44% 30%;
+
+    --accent: 16 100% 66%; /* Soft Coral #FF7F50 */
+    --accent-foreground: 16 80% 15%; /* Darker color for text on soft coral */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 210 44% 50%; /* Ring color based on primary */
+    
+    --radius: 0.5rem;
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 225 10% 15%; /* Dark Gray for dark mode background */
+    --foreground: 225 15% 85%; /* Light text for dark background */
+
+    --muted: 225 10% 25%;
+    --muted-foreground: 225 15% 70%;
+
+    --popover: 225 10% 15%;
+    --popover-foreground: 225 15% 85%;
+
+    --card: 225 10% 15%;
+    --card-foreground: 225 15% 85%;
+
+    --border: 225 10% 30%;
+    --input: 225 10% 30%;
+
+    --primary: 210 44% 60%; /* Muted Blue #6699CC */
+    --primary-foreground: 210 25% 95%; /* Light color for text on muted blue */
+
+    --secondary: 210 40% 25%;
+    --secondary-foreground: 210 44% 80%;
+    
+    --accent: 16 100% 66%; /* Soft Coral #FF7F50 */
+    --accent-foreground: 16 80% 15%; /* Darker color for text on soft coral */
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 210 44% 70%; /* Lighter ring for dark mode */
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
