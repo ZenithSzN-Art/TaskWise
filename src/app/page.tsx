@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import { TaskList } from "@/components/tasks/TaskList";
 import { AuthPage } from "@/components/auth/AuthPage";
+import { GamificationDashboard } from "@/components/GamificationDashboard";
 import { useAuth } from "@/components/AuthProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
@@ -32,7 +33,10 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <TaskList />
+        <div className="max-w-6xl mx-auto space-y-8">
+          <GamificationDashboard />
+          <TaskList />
+        </div>
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground border-t">
         <p>&copy; {new Date().getFullYear()} TaskWise. Stay organized, effortlessly.</p>

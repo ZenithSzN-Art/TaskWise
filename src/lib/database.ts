@@ -34,9 +34,35 @@ const initDB = () => {
       due_date TEXT,
       task_order INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME,
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     )
   `);
+
+  // User stats table for gamification
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_stats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      total_points INTEGER DEFAULT 0,
+      current_streak INTEGER DEFAULT 0,
+      longest_streak INTEGER DEFAULT 0,
+      tasks_completed_today INTEGER DEFAULT 0,
+      last_activity_date TEXT,
+      level INTEGER DEFAULT 1,
+      tasks_completed_total INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    )
+  `);
+
+  // Add completed_at column to existing tasks if not exists
+  try {
+    db.exec(`ALTER TABLE tasks ADD COLUMN completed_at DATETIME`);
+  } catch (error) {
+    // Column already exists, ignore error
+  }
 
   console.log('Database initialized');
 };
@@ -53,6 +79,10 @@ export class AuthService {
       `);
       
       const result = stmt.run(email, passwordHash, displayName || null);
+      
+      // Initialize user stats
+      UserStatsService.initializeUserStats(Number(result.lastInsertRowid));
+      
       return { id: result.lastInsertRowid, email, displayName };
     } catch (error: any) {
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -198,6 +228,143 @@ export class TaskService {
     });
     
     transaction();
+  }
+
+  static markTaskCompleted(taskId: number, userId: number, completed: boolean) {
+    const stmt = db.prepare(`
+      UPDATE tasks 
+      SET completed = ?, completed_at = ?
+      WHERE id = ? AND user_id = ?
+    `);
+    
+    const completedAt = completed ? new Date().toISOString() : null;
+    stmt.run(completed, completedAt, taskId, userId);
+    
+    // Update user stats if task is being completed
+    if (completed) {
+      UserStatsService.onTaskCompleted(userId);
+    }
+    
+    return this.getTask(taskId);
+  }
+}
+
+// User stats service for gamification
+export class UserStatsService {
+  static initializeUserStats(userId: number) {
+    const stmt = db.prepare(`
+      INSERT INTO user_stats (user_id, last_activity_date)
+      VALUES (?, ?)
+    `);
+    
+    try {
+      stmt.run(userId, new Date().toISOString().split('T')[0]);
+    } catch (error) {
+      // Stats already exist, ignore error
+    }
+  }
+
+  static getUserStats(userId: number) {
+    const stmt = db.prepare('SELECT * FROM user_stats WHERE user_id = ?');
+    let stats = stmt.get(userId) as any;
+    
+    if (!stats) {
+      this.initializeUserStats(userId);
+      stats = stmt.get(userId);
+    }
+    
+    return stats;
+  }
+
+  static onTaskCompleted(userId: number) {
+    const today = new Date().toISOString().split('T')[0];
+    const stats = this.getUserStats(userId);
+    
+    const transaction = db.transaction(() => {
+      let newPoints = stats.total_points + this.getPointsForTask();
+      let newStreak = stats.current_streak;
+      let newLongestStreak = stats.longest_streak;
+      let tasksToday = stats.tasks_completed_today;
+      
+      // Check if this is a new day
+      if (stats.last_activity_date !== today) {
+        // Check if streak continues (yesterday was last activity)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
+        if (stats.last_activity_date === yesterdayStr) {
+          newStreak += 1;
+        } else {
+          newStreak = 1; // Reset streak
+        }
+        
+        tasksToday = 1; // Reset daily count
+      } else {
+        tasksToday += 1;
+      }
+      
+      // Update longest streak
+      newLongestStreak = Math.max(newLongestStreak, newStreak);
+      
+      // Calculate level (every 100 points = 1 level)
+      const newLevel = Math.floor(newPoints / 100) + 1;
+      
+      const updateStmt = db.prepare(`
+        UPDATE user_stats SET
+          total_points = ?,
+          current_streak = ?,
+          longest_streak = ?,
+          tasks_completed_today = ?,
+          last_activity_date = ?,
+          level = ?,
+          tasks_completed_total = tasks_completed_total + 1,
+          updated_at = ?
+        WHERE user_id = ?
+      `);
+      
+      updateStmt.run(
+        newPoints,
+        newStreak,
+        newLongestStreak,
+        tasksToday,
+        today,
+        newLevel,
+        new Date().toISOString(),
+        userId
+      );
+    });
+    
+    transaction();
+  }
+
+  static getPointsForTask(): number {
+    return 10; // Base points per task
+  }
+
+  static getMotivationalQuotes(): string[] {
+    return [
+      "The way to get started is to quit talking and begin doing. - Walt Disney",
+      "Don't let yesterday take up too much of today. - Will Rogers",
+      "You don't have to be great to get started, but you have to get started to be great. - Les Brown",
+      "The secret of getting ahead is getting started. - Mark Twain",
+      "It always seems impossible until it's done. - Nelson Mandela",
+      "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+      "The only way to do great work is to love what you do. - Steve Jobs",
+      "Believe you can and you're halfway there. - Theodore Roosevelt",
+      "Your limitation—it's only your imagination.",
+      "Push yourself, because no one else is going to do it for you.",
+      "Great things never come from comfort zones.",
+      "Dream it. Wish it. Do it.",
+      "Success doesn't just find you. You have to go out and get it.",
+      "The harder you work for something, the greater you'll feel when you achieve it.",
+      "Don't stop when you're tired. Stop when you're done."
+    ];
+  }
+
+  static getRandomQuote(): string {
+    const quotes = this.getMotivationalQuotes();
+    return quotes[Math.floor(Math.random() * quotes.length)];
   }
 }
 

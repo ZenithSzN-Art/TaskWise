@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PackageOpen } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/components/AuthProvider';
+import { useUserStats } from '@/components/UserStatsProvider';
 
 interface DatabaseTask extends Omit<Task, 'id' | 'userId' | 'createdAt'> {
   id: number;
@@ -27,6 +28,7 @@ export const TaskList: FC = () => {
   const { toast } = useToast();
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const { user } = useAuth();
+  const { refreshStats } = useUserStats();
 
   // Convert database task to frontend Task format
   const convertTask = (dbTask: DatabaseTask): Task => ({
@@ -94,6 +96,11 @@ export const TaskList: FC = () => {
 
       // Refresh tasks list
       await fetchTasks();
+      toast({ 
+        title: "Task added successfully ✅", 
+        description: "Your new task is ready to be tackled!", 
+        variant: "default" 
+      });
     } catch (error) {
       console.error('Error adding task:', error);
       toast({ title: "Error", description: "Could not add task.", variant: "destructive" });
@@ -117,6 +124,17 @@ export const TaskList: FC = () => {
       setTasks(prev => prev.map(task => 
         task.id === taskId ? { ...task, completed } : task
       ));
+      
+      // Refresh stats and show positive feedback if task was completed
+      if (completed) {
+        refreshStats();
+        toast({ 
+          title: "Great job! 🎉", 
+          description: "Task completed! You earned 10 points.", 
+          variant: "default",
+          duration: 3000
+        });
+      }
     } catch (error) {
       console.error('Error updating task:', error);
       toast({ title: "Error", description: "Could not update task.", variant: "destructive" });

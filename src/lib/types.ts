@@ -1,6 +1,3 @@
-import type { Timestamp } from 'firebase/firestore';
-import type { User as FirebaseUser } from 'firebase/auth';
-
 export interface Task {
   id: string;
   title: string;
@@ -9,8 +6,12 @@ export interface Task {
   priority: 1 | 2 | 3; // 1: High, 2: Medium, 3: Low
   dueDate?: string | null; // ISO string for date
   order: number;
-  createdAt: Timestamp;
+  createdAt: { seconds: number; nanoseconds: number };
   userId: string;
 }
 
-export type AppUser = FirebaseUser;
+export interface AppUser {
+  id: number;
+  email: string;
+  displayName?: string;
+}

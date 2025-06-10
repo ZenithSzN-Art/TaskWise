@@ -18,8 +18,14 @@ export async function PUT(
     const taskId = parseInt(params.id);
     const updates = await request.json();
     
-    const task = TaskService.updateTask(taskId, user.id, updates);
-    return NextResponse.json({ task });
+    // If updating completion status, use the special method that triggers stats
+    if ('completed' in updates) {
+      const task = TaskService.markTaskCompleted(taskId, user.id, updates.completed);
+      return NextResponse.json({ task });
+    } else {
+      const task = TaskService.updateTask(taskId, user.id, updates);
+      return NextResponse.json({ task });
+    }
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message },
